@@ -38,18 +38,24 @@ void InitializeLED()
 	HAL_GPIO_WritePin(GPIOJ, (LED_GREEN | LED_RED), GPIO_PIN_RESET);
 }
 
+extern "C" void TIM2_IRQHandler() {
+	HAL_TIM_IRQHandler(&s_TimerInstance);
+}
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+	HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+}
+
 int main(void) {
 	SystemInit();
 
 	InitializeLED();
 	InitializeTimer();
 
-	for (;;) {
-		if (__HAL_TIM_GET_FLAG(&s_TimerInstance, TIM_FLAG_UPDATE) != RESET) {
-			__HAL_TIM_CLEAR_IT(&s_TimerInstance, TIM_IT_UPDATE);
-			HAL_GPIO_TogglePin(GPIOJ, (LED_GREEN | LED_RED));
-		}
-	}
+	HAL_NVIC_SetPriority(TIM2_IRQn, 0, 0);
+	HAL_NVIC_EnableIRQ(TIM2_IRQn);
+
+	for (;;);
 }
 
 #ifdef USE_FULL_ASSERT
