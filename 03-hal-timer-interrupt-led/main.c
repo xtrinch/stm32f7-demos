@@ -38,12 +38,12 @@ void InitializeLED()
 	HAL_GPIO_WritePin(GPIOJ, (LED_GREEN | LED_RED), GPIO_PIN_RESET);
 }
 
-extern "C" void TIM2_IRQHandler() {
+void TIM2_IRQHandler() {
 	HAL_TIM_IRQHandler(&s_TimerInstance);
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-	HAL_GPIO_TogglePin(GPIOD, GPIO_PIN_12);
+	HAL_GPIO_TogglePin(GPIOJ, (LED_GREEN | LED_RED));
 }
 
 int main(void) {
