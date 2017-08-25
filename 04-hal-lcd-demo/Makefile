@@ -10,7 +10,7 @@ ASFLAGS = -g
 ## all .c files in current directory
 #SRCS=$(wildcard *.c)
 #SRCS=tm_stm32f4_disco.c
-SRCS=stm32f7xx_it.c
+SRCS=
 OBJS_CURR=$(SRCS:.c=.o)
 
 OBJS=  $(STARTUP) $(OBJS_CURR) main.o
