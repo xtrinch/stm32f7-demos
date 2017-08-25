@@ -1,4 +1,5 @@
 /**
+/**
   ******************************************************************************
   * @file    LCD_DSI/LCD_DSI_CmdMode_DoubleBuffering/Inc/main.h
   * @author  MCD Application Team
