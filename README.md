@@ -1,4 +1,4 @@
-# STM32F769I discovery demos
+# STM32F7 demos
 
 ## Build template
 
