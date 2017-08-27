@@ -42,17 +42,21 @@ void RFID_RC522_Init(void) {
 	TM_MFRC522_AntennaOn();		//Open the antenna
 }
 
-TM_MFRC522_Status_t TM_MFRC522_Check(uint8_t* id) {
+TM_MFRC522_Status_t TM_MFRC522_Check(uint8_t* id, uint8_t* type) {
 	TM_MFRC522_Status_t status;
 	//Find cards, return card type
 
+	// REQuest command, Type A. Invites PICCs in state IDLE to go to READY and prepare for anticollision or selection. 7 bit frame.
 	status = TM_MFRC522_Request(PICC_REQIDL, id);
 
 	if (status == MI_OK) {
 		//Card detected
 		//Anti-collision, return card serial number 4 bytes
 		status = TM_MFRC522_Anticoll(id);
+		//select, return sak and crc
+		status = TM_MFRC522_SelectTag(id, type);
 	}
+
 	TM_MFRC522_Halt();			//Command card into hibernation
 
 	return status;
@@ -298,6 +302,7 @@ TM_MFRC522_Status_t TM_MFRC522_ToCard(uint8_t command, // the command to execute
 				}
 			}
 		} else {
+			return MI_ERR;
 		}
 	} else {
 
@@ -336,12 +341,12 @@ TM_MFRC522_Status_t TM_MFRC522_Anticoll(uint8_t* serNum) {
 	return status;
 }
 
-void TM_MFRC522_CalculateCRC(uint8_t*  pIndata, uint8_t len, uint8_t* pOutData) {
+TM_MFRC522_Status_t TM_MFRC522_CalculateCRC(uint8_t*  pIndata, uint8_t len, uint8_t* pOutData) {
 	uint8_t i, n;
 
 	TM_MFRC522_ClearBitMask(MFRC522_REG_DIV_IRQ, 0x04);			//CRCIrq = 0
 	TM_MFRC522_SetBitMask(MFRC522_REG_FIFO_LEVEL, 0x80);			//Clear the FIFO pointer
-	//Write_MFRC522(CommandReg, PCD_IDLE);
+	TM_MFRC522_WriteRegister(MFRC522_REG_COMMAND, PCD_IDLE); // Stop any active command.
 
 	//Writing data to the FIFO
 	for (i = 0; i < len; i++) {
@@ -356,25 +361,43 @@ void TM_MFRC522_CalculateCRC(uint8_t*  pIndata, uint8_t len, uint8_t* pOutData) 
 		i--;
 	} while ((i!=0) && !(n&0x04));			//CRCIrq = 1
 
+	if (i == 0) {
+		return MI_TIMEOUT;
+	}
+
 	//Read CRC calculation result
 	pOutData[0] = TM_MFRC522_ReadRegister(MFRC522_REG_CRC_RESULT_L);
 	pOutData[1] = TM_MFRC522_ReadRegister(MFRC522_REG_CRC_RESULT_M);
+
+	return MI_OK;
 }
 
-uint8_t TM_MFRC522_SelectTag(uint8_t* serNum) {
+TM_MFRC522_Status_t TM_MFRC522_SelectTag(uint8_t* serNum, uint8_t* type) {
 	uint8_t i;
 	TM_MFRC522_Status_t status;
 	uint8_t size;
 	uint16_t recvBits;
 	uint8_t buffer[9];
+	uint8_t sak[3] = {0};
 
 	buffer[0] = PICC_SElECTTAG;
 	buffer[1] = 0x70;
-	for (i = 0; i < 5; i++) {
+	for (i = 0; i < 4; i++) {
 		buffer[i+2] = *(serNum+i);
 	}
-	TM_MFRC522_CalculateCRC(buffer, 7, &buffer[7]);		//??
-	status = TM_MFRC522_ToCard(PCD_TRANSCEIVE, buffer, 9, buffer, &recvBits);
+	buffer[6] = buffer[2] ^ buffer[3] ^ buffer[4] ^ buffer[5]; // Calculate BCC - Block Check Character
+	status = TM_MFRC522_CalculateCRC(buffer, 7, &buffer[7]);		//??
+
+	if (status != MI_OK) {
+		//LCD_UsrLog ((char *)"Calculate crc nicht gut.\n");
+		return status;
+	}
+
+	status = TM_MFRC522_ToCard(PCD_TRANSCEIVE, buffer, 9, sak, &recvBits);
+
+	if (status != MI_OK) {
+		//LCD_UsrLog ((char *)"Transceive for select tag didnt go so well.\n");
+	}
 
 	if ((status == MI_OK) && (recvBits == 0x18)) {
 		size = buffer[0];
@@ -382,7 +405,13 @@ uint8_t TM_MFRC522_SelectTag(uint8_t* serNum) {
 		size = 0;
 	}
 
-	return size;
+	if (recvBits != 24) { // SAK must be exactly 24 bits (1 byte + CRC_A).
+		return MI_ERR;
+	}
+
+	*type = sak[0];
+
+	return status;
 }
 
 void TM_MFRC522_Halt(void) {
@@ -405,15 +434,18 @@ void bin_to_strhex(unsigned char *bin, unsigned int binsz, char **result)
   char          hex_str[]= "0123456789abcdef";
   unsigned int  i;
 
-  *result = (char *)malloc(binsz * 2 + 1);
-  (*result)[binsz * 2] = 0;
+  *result = (char *)malloc(binsz * 2 + 3);
+  (*result)[binsz * 2 + 2] = 0;
 
   if (!binsz)
     return;
 
+  (*result)[0] = '0';
+  (*result)[1] = 'x';
+
   for (i = 0; i < binsz; i++)
     {
-      (*result)[i * 2 + 0] = hex_str[(bin[i] >> 4) & 0x0F];
-      (*result)[i * 2 + 1] = hex_str[(bin[i]     ) & 0x0F];
+      (*result)[i * 2 + 2] = hex_str[(bin[i] >> 4) & 0x0F];
+      (*result)[i * 2 + 3] = hex_str[(bin[i]     ) & 0x0F];
     }  
 }

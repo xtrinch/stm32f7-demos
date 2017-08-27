@@ -15,12 +15,9 @@ int main(void)
 {
 
 	/* Recognized card ID */
-	uint8_t CardID[5];
-	/* My cards id */
-	/* I read them with program below, and write this here */
-	uint8_t MyID[5] = {
-		0x43, 0xdc, 0x52, 0xb6, 0x7b	/* My card on my keys */
-	};
+	uint8_t CardID[4];
+  uint8_t type;
+  char *result;
 
   /* Enable the CPU Cache */
   CPU_CACHE_Enable();
@@ -52,13 +49,17 @@ int main(void)
 
   /* Infinite loop */
   while (1) {
-    int status = TM_MFRC522_Check(CardID);
+    int status = TM_MFRC522_Check(CardID, &type);
   	if (status == MI_OK) {
       LCD_UsrLog ((char *)"Found tag: ");
-      char *result;
       bin_to_strhex((unsigned char *)CardID, sizeof(CardID), &result);
       LCD_UsrLog ((char *)result);
       LCD_UsrLog ((char *)"\n");
+      LCD_UsrLog ((char *)"Type is: ");
+      bin_to_strhex((unsigned char *)&type, 1, &result);
+      LCD_UsrLog ((char *)result);
+      LCD_UsrLog ((char *)"\n");
+
   	} else {
         if (status == MI_TIMEOUT) {
             LCD_UsrLog ((char *)"No tag found.\n");

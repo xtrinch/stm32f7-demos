@@ -186,7 +186,7 @@ extern void RFID_RC522_Init(void);
  *
  * Returns MI_OK if card is detected
  */
-extern TM_MFRC522_Status_t TM_MFRC522_Check(uint8_t* id);
+extern TM_MFRC522_Status_t TM_MFRC522_Check(uint8_t* id, uint8_t* type);
 
 /**
  * Compare 2 RFID ID's
@@ -217,8 +217,8 @@ extern void TM_MFRC522_Reset(void);
 extern TM_MFRC522_Status_t TM_MFRC522_Request(uint8_t reqMode, uint8_t* TagType);
 extern TM_MFRC522_Status_t TM_MFRC522_ToCard(uint8_t command, uint8_t* sendData, uint8_t sendLen, uint8_t* backData, uint16_t* backLen);
 extern TM_MFRC522_Status_t TM_MFRC522_Anticoll(uint8_t* serNum);
-extern void TM_MFRC522_CalculateCRC(uint8_t* pIndata, uint8_t len, uint8_t* pOutData);
-extern uint8_t TM_MFRC522_SelectTag(uint8_t* serNum);
+extern TM_MFRC522_Status_t TM_MFRC522_CalculateCRC(uint8_t* pIndata, uint8_t len, uint8_t* pOutData);
+extern TM_MFRC522_Status_t TM_MFRC522_SelectTag(uint8_t* serNum, uint8_t* sak);
 extern TM_MFRC522_Status_t TM_MFRC522_Auth(uint8_t authMode, uint8_t BlockAddr, uint8_t* Sectorkey, uint8_t* serNum);
 extern TM_MFRC522_Status_t TM_MFRC522_Read(uint8_t blockAddr, uint8_t* recvData);
 extern TM_MFRC522_Status_t TM_MFRC522_Write(uint8_t blockAddr, uint8_t* writeData);
