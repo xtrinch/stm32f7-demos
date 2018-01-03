@@ -17,7 +17,6 @@
  * |----------------------------------------------------------------------
  */
 #include "rfid-rc522.h"
-#include "lcd_log.h"
 #include <stdlib.h>
 
 extern SPI_HandleTypeDef SpiHandle;
