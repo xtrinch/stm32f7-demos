@@ -37,7 +37,12 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
+#include "cmsis_os.h"
+#include "app_ethernet.h"
+#include "ethernetif.h"
+#include "lwip/tcpip.h"
+#include "lwip/netif.h"
+#include "lcd_log.h"
 /** @addtogroup STM32F7xx_HAL_Examples
   * @{
   */
@@ -55,6 +60,12 @@ static void SystemClock_Config(void);
 static void Error_Handler(void);
 static void MPU_Config(void);
 static void CPU_CACHE_Enable(void);
+
+static void StartThread(void const * argument);
+static void BSP_Config(void);
+static void Netif_Config(void);
+
+struct netif gnetif; /* network interface structure */
 
 /* Private functions ---------------------------------------------------------*/
 
@@ -90,12 +101,113 @@ int main(void)
 
 
   /* Add your application code here */
+  /* Init thread */
+#if defined(__GNUC__)
+  osThreadDef(Start, StartThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE * 5);
+#else
+  osThreadDef(Start, StartThread, osPriorityNormal, 0, configMINIMAL_STACK_SIZE * 2);
+#endif
 
+  osThreadCreate (osThread(Start), NULL);
 
-  /* Infinite loop */
+  /* Start scheduler */
+  osKernelStart();
+  
+  /* We should never get here as control is now taken by the scheduler */
   while (1)
   {
   }
+}
+
+/**
+  * @brief  Initializes the lwIP stack
+  * @param  None
+  * @retval None
+  */
+static void Netif_Config(void)
+{
+  ip_addr_t ipaddr;
+  ip_addr_t netmask;
+  ip_addr_t gw;
+ 
+#ifdef USE_DHCP
+  ip_addr_set_zero_ip4(&ipaddr);
+  ip_addr_set_zero_ip4(&netmask);
+  ip_addr_set_zero_ip4(&gw);
+#else
+  IP_ADDR4(&ipaddr,IP_ADDR0,IP_ADDR1,IP_ADDR2,IP_ADDR3);
+  IP_ADDR4(&netmask,NETMASK_ADDR0,NETMASK_ADDR1,NETMASK_ADDR2,NETMASK_ADDR3);
+  IP_ADDR4(&gw,GW_ADDR0,GW_ADDR1,GW_ADDR2,GW_ADDR3);
+#endif /* USE_DHCP */
+  
+  netif_add(&gnetif, &ipaddr, &netmask, &gw, NULL, &ethernetif_init, &tcpip_input);
+  
+  /*  Registers the default network interface. */
+  netif_set_default(&gnetif);
+  
+  if (netif_is_link_up(&gnetif))
+  {
+    /* When the netif is fully configured this function must be called.*/
+    netif_set_up(&gnetif);
+  }
+  else
+  {
+    /* When the netif link is down this function must be called */
+    netif_set_down(&gnetif);
+  }
+}
+
+
+static void StartThread(void const * argument) {
+  /* Initialize LED's & LCD */
+  BSP_Config();
+
+  /* Create the tcp/ip stack thread */
+  tcpip_init(NULL, NULL);
+
+  /* Intialize the LwIP stack */
+  Netif_Config();
+
+  /* Initialize webserver demo */
+
+  /* Notify user about the network interface config */
+  User_notification(&gnetif);
+
+  /* Start DHCP client */
+  osThreadDef(DHCP, DHCP_thread, osPriorityBelowNormal, 0, configMINIMAL_STACK_SIZE * 2);
+  osThreadCreate (osThread(DHCP), &gnetif);
+
+  for (;;) {
+    osThreadTerminate(NULL);
+  }
+}
+
+/**
+  * @brief  Initializes the STM32F769I-DISOVERY's LCD and LEDs resources.
+  * @param  None
+  * @retval None
+  */
+static void BSP_Config(void)
+{
+  /* Initialize the LCD */
+  BSP_LCD_Init();
+  
+  /* Initialize the LCD Layers */
+  BSP_LCD_LayerDefaultInit(1, LCD_FB_START_ADDRESS);
+  
+  /* Set LCD Foreground Layer  */
+  BSP_LCD_SelectLayer(1);
+  
+  BSP_LCD_SetFont(&LCD_DEFAULT_FONT);
+  
+  /* Initialize LCD Log module */
+  LCD_LOG_Init();
+  
+  /* Show Header and Footer texts */
+  LCD_LOG_SetHeader((uint8_t *)"Webserver Application Socket API");
+  LCD_LOG_SetFooter((uint8_t *)"STM32F769I-DISOVERY board");
+  
+  LCD_UsrLog ("  State: Ethernet Initialization ...\n");
 }
 
 /**
@@ -202,7 +314,7 @@ static void MPU_Config(void)
   /* Configure the MPU attributes as WT for SRAM */
   MPU_InitStruct.Enable = MPU_REGION_ENABLE;
   MPU_InitStruct.BaseAddress = 0x20020000;
-  MPU_InitStruct.Size = MPU_REGION_SIZE_512KB;
+  MPU_InitStruct.Size = MPU_REGION_SIZE_256KB; // size of ETH Rx & Tx descriptors
   MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
   MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
   MPU_InitStruct.IsCacheable = MPU_ACCESS_CACHEABLE;
