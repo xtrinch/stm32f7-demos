@@ -13,7 +13,7 @@ ASFLAGS = -g
 SRCS=
 OBJS_CURR=$(SRCS:.c=.o)
 
-OBJS=  $(STARTUP) $(OBJS_CURR) ethernetif.o app_ethernet.o main.o
+OBJS=  $(STARTUP) $(OBJS_CURR) ethernetif.o app_ethernet.o httpserver-socket.o main.o
 
 # include common make file
 

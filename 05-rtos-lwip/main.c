@@ -39,6 +39,7 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "app_ethernet.h"
+#include "httpserver-socket.h"
 #include "ethernetif.h"
 #include "lwip/tcpip.h"
 #include "lwip/netif.h"
