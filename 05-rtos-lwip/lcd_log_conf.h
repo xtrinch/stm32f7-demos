@@ -78,12 +78,12 @@
 #define     LCD_LOG_BACKGROUND_COLOR              LCD_COLOR_WHITE
 #define     LCD_LOG_TEXT_COLOR                    LCD_COLOR_DARKBLUE
 
-#define     LCD_LOG_SOLID_BACKGROUND_COLOR        LCD_COLOR_GREEN
+#define     LCD_LOG_SOLID_BACKGROUND_COLOR        LCD_COLOR_BLUE
 #define     LCD_LOG_SOLID_TEXT_COLOR              LCD_COLOR_WHITE
 
 /* Define the cache depth */
 #define     CACHE_SIZE              100
-#define     YWINDOW_SIZE            20
+#define     YWINDOW_SIZE            22
 
 
 /* Redirect the printf to the LCD */

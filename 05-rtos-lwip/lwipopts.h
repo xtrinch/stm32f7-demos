@@ -235,6 +235,7 @@ The STM32F7xx allows computing and verifying the IP, UDP, TCP and ICMP checksums
 #define LWIP_DEBUG 1
 
 #define DHCP_DEBUG LWIP_DBG_ON
+//#define IP_DEBUG LWIP_DBG_ON
 
 #endif /* __LWIPOPTS_H__ */
 
