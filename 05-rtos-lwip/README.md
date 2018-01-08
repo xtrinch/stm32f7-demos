@@ -18,7 +18,7 @@ Doesn't work yet. Check back later.
   - 05-rtos-lwip/stm32f7xx_it.c -          STM32 interrupt handlers
   - 05-rtos-lwip/app_ethernet.c -          Ethernet specific module
   - 05-rtos-lwip/main.c -                  Main program
-  - 05-rtos-lwip/syscalls.c -              System calls
+  - 05-rtos-lwip/syscalls.c -              System calls for bare metal
   - 05-rtos-lwip/system_stm32f7xx.c -      STM32F7xx system clock configuration file
   - 05-rtos-lwip/ethernetif.c -            Interfacing LwIP to ETH driver
   - 05-rtos-lwip/httpserver-socket.c -     httpserver socket main thread
