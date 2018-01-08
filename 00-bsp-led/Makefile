@@ -13,7 +13,7 @@ ASFLAGS = -g
 SRCS=
 OBJS_CURR=$(SRCS:.c=.o)
 
-OBJS=  $(STARTUP) $(OBJS_CURR) main.o
+OBJS=  $(STARTUP) $(OBJS_CURR) src/main.o
 
 # include common make file
 
