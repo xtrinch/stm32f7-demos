@@ -58,6 +58,7 @@ void SVC_Handler(void);
 void DebugMon_Handler(void);
 void PendSV_Handler(void);
 void SysTick_Handler(void);
+void EXTI9_5_IRQHandler(void); // does not work without it ?
 
 #ifdef __cplusplus
 }

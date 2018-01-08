@@ -170,6 +170,7 @@ static void StartThread(void const * argument) {
   Netif_Config();
 
   /* Initialize webserver demo */
+  http_server_socket_init();
 
   /* Notify user about the network interface config */
   User_notification(&gnetif);

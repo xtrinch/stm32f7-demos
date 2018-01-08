@@ -40,7 +40,10 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f7xx_it.h"
-   
+#include "cmsis_os.h"
+
+extern ETH_HandleTypeDef EthHandle;
+
 /** @addtogroup STM32F7xx_HAL_Examples
   * @{
   */
@@ -139,7 +142,17 @@ void DebugMon_Handler(void)
   */
 void SysTick_Handler(void)
 {
-  HAL_IncTick();
+  osSystickHandler();
+}
+
+/**
+  * @brief  This function handles Ethernet interrupt request.
+  * @param  None
+  * @retval None
+  */
+void ETH_IRQHandler(void)
+{
+  HAL_ETH_IRQHandler(&EthHandle);
 }
 
 /******************************************************************************/

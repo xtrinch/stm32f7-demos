@@ -118,7 +118,7 @@ void DHCP_thread(void const * argument)
         ip_addr_set_zero_ip4(&netif->gw);       
         dhcp_start(netif);
         DHCP_state = DHCP_WAIT_ADDRESS;
-        LCD_UsrLog ("  State: Looking for DHCP server ...\n");
+        LCD_UsrLog ("State: Looking for DHCP server ...\n");
       }
       break;
       
@@ -158,6 +158,7 @@ void DHCP_thread(void const * argument)
       break;
   case DHCP_LINK_DOWN:
     {
+      LCD_UsrLog ("DHCP link down.");  
       /* Stop DHCP */
       dhcp_stop(netif);
       DHCP_state = DHCP_OFF; 

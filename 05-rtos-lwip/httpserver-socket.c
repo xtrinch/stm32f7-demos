@@ -53,6 +53,7 @@
 #include "string.h"
 #include "httpserver-socket.h"
 #include "cmsis_os.h"
+#include "lcd_log.h"
 
 #include <stdio.h>
 
@@ -178,6 +179,8 @@ static const unsigned char PAGE_START[] = {
   */
 void http_server_serve(int conn) 
 {
+  LCD_UsrLog ("HTTP server serving.");
+
   int buflen = 1500;
   int ret;
   struct fs_file file;
@@ -185,7 +188,12 @@ void http_server_serve(int conn)
 				
   /* Read in the request */
   ret = read(conn, recv_buffer, buflen); 
-  if(ret < 0) return;
+  if(ret < 0) {
+    LCD_UsrLog ("Invalid HTTP request received");
+    return;
+  };
+
+  LCD_UsrLog ("HTTP request received: %s\n", (char *)recv_buffer);
 
   /* Check if request to get ST.gif */
   if (strncmp((char *)recv_buffer,"GET /STM32F7xx_files/ST.gif",27)==0)
@@ -241,9 +249,12 @@ static void http_server_socket_thread(void *arg)
   int sock, newconn, size;
   struct sockaddr_in address, remotehost;
 
+  LCD_UsrLog ("HTTP server socket thread started.\n");
+
  /* create a TCP socket */
   if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) 
   {
+    LCD_UsrLog ("Could not create a TCP socket.\n");
     return;
   }
   
@@ -254,6 +265,7 @@ static void http_server_socket_thread(void *arg)
 
   if (bind(sock, (struct sockaddr *)&address, sizeof (address)) < 0)
   {
+    LCD_UsrLog ("Could not bind socket to port 80.\n");
     return;
   }
   
@@ -264,6 +276,7 @@ static void http_server_socket_thread(void *arg)
   
   while (1) 
   {
+    LCD_UsrLog ("Accepting connections at port 80.\n");
     newconn = accept(sock, (struct sockaddr *)&remotehost, (socklen_t *)&size);
     http_server_serve(newconn);
   }
